@@ -1,7 +1,8 @@
 import logging
+import os
 import sys
 import tornado.ioloop
-from tornado.web import Application, RequestHandler, url
+from tornado.web import Application, RequestHandler, RedirectHandler, url
 
 # Logging variables
 logLevel = logging.DEBUG
@@ -16,7 +17,7 @@ except:
 
 class MainHandler(RequestHandler):
     def get(self):
-        self.write("Hello, world")
+        self.write("<img src='http://localhost:8888/img/brodhi.jpg'>")
 
 class BaseHandler(RequestHandler):
     def initialize(self, base):
@@ -25,6 +26,7 @@ class BaseHandler(RequestHandler):
 def app():
     return Application([
         (r"/", MainHandler),
+        url(r"/app", RedirectHandler, dict(url="https://www.apple.com/itunes/"))
     ], debug=True, xsrf_cookies=True)
 
 def main():
