@@ -21,18 +21,21 @@ class MainHandler(RequestHandler):
 
 class WebApp(Application):
     def __init__(self):
+        """Responsible for global configuration, including the routing table that maps requests to handlers"""
+
+        # How Tornado performs mappings between URLs and handlers
         handlers = [
             (r"/", MainHandler),
             url(r"/app", RedirectHandler, {"url": "https://www.imdb.com/title/tt0102685/"})
         ]
-        settings = dict(
-            debug=True,
-            # cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
-            # template_path=os.path.join(os.path.dirname(__file__), "templates"),
-            # static_path=os.path.join(os.path.dirname(__file__), "static"),
-            xsrf_cookies=True
-        )
-        super(WebApp, self).__init__(handlers, **settings)
+
+        # Tornado settings
+        settings = {
+            "debug": True,
+            "xsrf_cookies": True
+        }
+        # Used for single inheritance to call parent class
+        super().__init__(handlers, **settings)
 
 def main():
     WebApp().listen(8888)
