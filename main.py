@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-import tornado.ioloop
+from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, RedirectHandler, url
 
 # Logging variables
@@ -17,21 +17,26 @@ except:
 
 class MainHandler(RequestHandler):
     def get(self):
-        self.write("<img src='http://localhost:8888/img/brodhi.jpg'>")
+        self.write({"Name": "Brodi", "Title": "Adventurer"})
 
-class BaseHandler(RequestHandler):
-    def initialize(self, base):
-        self.base = base
-
-def app():
-    return Application([
-        (r"/", MainHandler),
-        url(r"/app", RedirectHandler, dict(url="https://www.apple.com/itunes/"))
-    ], debug=True, xsrf_cookies=True)
+class WebApp(Application):
+    def __init__(self):
+        handlers = [
+            (r"/", MainHandler),
+            url(r"/app", RedirectHandler, {"url": "https://www.imdb.com/title/tt0102685/"})
+        ]
+        settings = dict(
+            debug=True,
+            # cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
+            # template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            # static_path=os.path.join(os.path.dirname(__file__), "static"),
+            xsrf_cookies=True
+        )
+        super(WebApp, self).__init__(handlers, **settings)
 
 def main():
-    app().listen(8888)
-    tornado.ioloop.IOLoop.current().start()
+    WebApp().listen(8888)
+    IOLoop.current().start()
 
 if __name__ == "__main__":
     main()
