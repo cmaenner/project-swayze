@@ -1,8 +1,11 @@
+import json
 import logging
 import os
 import sys
+import tornado.escape
+from tornado.httpclient import AsyncHTTPClient
 from tornado.ioloop import IOLoop
-from tornado.web import Application, RequestHandler, RedirectHandler, url
+from tornado.web import Application, RequestHandler, RedirectHandler, url, asynchronous, HTTPError
 
 # Logging variables
 logLevel = logging.DEBUG
@@ -16,8 +19,17 @@ except:
     sys.exit(1)
 
 class MainHandler(RequestHandler):
+    @asynchronous
     def get(self):
-        self.write({"Name": "Brodi", "Title": "Adventurer"})
+        https = AsyncHTTPClient()
+        https.fetch("https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.json?accessType=DOWNLOAD", callback=self.on_response)
+
+    def on_response(self, response):
+        if response.error:
+            raise HTTPError(500)
+        json = tornado.escape.json_decode(response.body)
+        self.write(json["meta"]["view"])
+        self.finish()
 
 class WebApp(Application):
     def __init__(self):
