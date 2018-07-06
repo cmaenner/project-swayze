@@ -3,10 +3,13 @@ If you want the ultimate, you've got to be willing to pay the ultimate price. It
 
 ![alt text](pics/brodhi.jpg "Bodhi")
 
-# Reference (https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
+# Reference
+[How to generate self-signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
     cfssl print-defaults config > ca-config.json
     cfssl print-defaults csr > ca-csr.json
     cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
+    cfssl print-defaults csr > server.json
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server server.json | cfssljson -bare server
 
 # Generate certificate authority key
     openssl genrsa -out ca.key 4096
