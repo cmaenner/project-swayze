@@ -5,6 +5,7 @@ If you want the ultimate, you've got to be willing to pay the ultimate price. It
 
 # Reference
 [How to generate self-signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
+
     cfssl print-defaults config > ca-config.json
     cfssl print-defaults csr > ca-csr.json
     cfssl gencert -initca ca-csr.json | cfssljson -bare ca -
