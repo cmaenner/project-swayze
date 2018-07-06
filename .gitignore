@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Security
+server/*-key.pem
+server/*-key.json

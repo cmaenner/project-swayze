@@ -1,0 +1,21 @@
+{
+    "CN": "swayze",
+    "hosts": [
+        "localhost",
+        "127.0.0.1"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "PA",
+            "O": "Dafinga",
+            "ST": "Philadelphia",
+            "OU": "Project Swayze"
+        }
+    ]
+}
+
