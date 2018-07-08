@@ -5,11 +5,12 @@ import ssl
 import sys
 from tornado.auth import FacebookGraphMixin
 from tornado.escape import json_decode, json_encode, url_escape
+from tornado.gen import coroutine
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line
-from tornado.web import Application, authenticated, RequestHandler, RedirectHandler, url, asynchronous, HTTPError
+from tornado.web import Application, authenticated, RequestHandler, RedirectHandler, url, asynchronous, HTTPError, UIModule
 
 # Default CLI parameters
 define("port", default=443, help="run on the given port", type=int)
@@ -27,10 +28,9 @@ try:
 except:
     sys.exit(1)
 
-
 class BaseHandler(RequestHandler):
     def get_current_user(self):
-        user_json = self.get_secure_cookie("swayze")
+        user_json = self.get_secure_cookie("fbdemo_user")
         if not user_json:
             return None
         return json_decode(user_json)
@@ -64,38 +64,45 @@ class WebApp(Application):
         # Tornado settings
         settings = {
             "autoescape": None,
+            "cookie_secret": "__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
             "debug": True,
             "facebook_api_key": options.facebook_api_key,
             "facebook_secret": options.facebook_secret,
             "login_url": "/auth/login",
-            "xsrf_cookies": True
+            "static_path": os.path.join(os.path.dirname(__file__), "static"),
+            "template_path": os.path.join(os.path.dirname(__file__), "templates"),
+            "xsrf_cookies": True,
+            "ui_modules": {"Post": PostModule}
         }
+
         # Used for single inheritance to call parent class
         super().__init__(handlers, **settings)
 
 class AuthLoginHandler(BaseHandler, FacebookGraphMixin):
-    async def get(self):
-        my_url = (self.request.protocol + "://" + self.request.host +
-                  "/auth/login?next=" +
-                  url_escape(self.get_argument("next", "/")))
+    @coroutine
+    def get(self):
         if self.get_argument("code", False):
-            user = await self.get_authenticated_user(
-                redirect_uri=my_url,
+            user = yield self.get_authenticated_user(
+                redirect_uri='https://localhost/',
                 client_id=self.settings["facebook_api_key"],
                 client_secret=self.settings["facebook_secret"],
                 code=self.get_argument("code"))
-            self.set_secure_cookie(
-                "fbdemo_user", json_encode(user))
-            self.redirect(self.get_argument("next", "/"))
-            return
-        self.authorize_redirect(redirect_uri=my_url,
-                                client_id=self.settings["facebook_api_key"],
-                                extra_params={"scope": "user_posts"})
+        # Save the user with e.g. set_secure_cookie
+        else:
+            yield self.authorize_redirect(
+                redirect_uri='https://localhost/',
+                client_id=self.settings["facebook_api_key"])
+                # extra_params={"scope": "read_stream,offline_access"})
+                # code=self.get_argument("code"))
 
 class AuthLogoutHandler(BaseHandler, FacebookGraphMixin):
     def get(self):
         self.clear_cookie("fbdemo_user")
         self.redirect(self.get_argument("next", "/"))
+
+class PostModule(UIModule):
+    def render(self, post):
+        return self.render_string("modules/post.html", post=post)
 
 def main():
     parse_command_line()
