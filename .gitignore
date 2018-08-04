@@ -106,3 +106,6 @@ venv.bak/
 # Security
 server/*-key.pem
 server/*-key.json
+
+# MacOS
+.DS_Store
