@@ -93,7 +93,7 @@ def main():
     # Start web application
     httpServer = HTTPServer(Swayze(), ssl_options=sslCtx)
     httpServer.listen(options.port)
-    
+
     # Start the I/O loop for the current thread
     IOLoop.current().start()
 
