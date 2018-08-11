@@ -1,3 +1,6 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
 from tornado.concurrent import is_future
 from tornado.gen import Return, coroutine, convert_yielded, multi_future, sleep
 from tornado.ioloop import IOLoop
@@ -13,7 +16,6 @@ from graphql.type import (
     GraphQLField,
     GraphQLString
 )
-
 
 class TornadoExecutor(object):
     def __init__(self, io_loop=None):

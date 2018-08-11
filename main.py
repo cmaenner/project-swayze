@@ -24,7 +24,8 @@ from tornado.web import Application, asynchronous, authenticated, HTTPError, Red
 from tornado.options import define, options, parse_command_line, parse_config_file
 
 # Application modules
-from modules.tornado_authentication import BaseHandler, AuthLoginHandler, AuthLogoutHandler, PostModule
+from modules.music_sources import Soundcloud
+from modules.tornado_application import BaseHandler, AuthLoginHandler, AuthLogoutHandler, PostModule
 from modules.tornado_graphql_handler import TornadoGraphQLHandler
 from modules.tornado_main import MainHandler
 from modules.schema import schema
@@ -55,7 +56,8 @@ class Swayze(Application):
             url(r"/app", RedirectHandler, {"url": "https://www.imdb.com/title/tt0102685/"}),
             (r"/auth/login", AuthLoginHandler),
             (r"/auth/logout", AuthLogoutHandler),
-            (r"/graphql", TornadoGraphQLHandler, dict(graphiql=False, schema=schema))
+            (r"/graphql", TornadoGraphQLHandler, dict(graphiql=False, schema=schema)),
+            (r"/soundcloud", Soundcloud)
         ]
 
         # Tornado settings
@@ -64,7 +66,7 @@ class Swayze(Application):
             "login_url": "/auth/login",
             "template_path": os.path.join(os.path.dirname(__file__), "templates"),
             "static_path": os.path.join(os.path.dirname(__file__), "static"),
-            # "xsrf_cookies": True,
+            "xsrf_cookies": True,
             "facebook_api_key": options.facebook_api_key,
             "facebook_secret": options.facebook_secret,
             "ui_modules": {"Post": PostModule},
