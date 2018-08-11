@@ -10,20 +10,16 @@ __maintainer__ = "Chris Maenner"
 __email__ = "christopher@dafinga.net"
 __status__ = "Development"
 
-import base64
 import json
-import graphene
 import logging
-import os
+import os.path
 import ssl
 import sys
-import os.path
-import tornado.auth
-import tornado.escape
-import tornado.httpserver
-import tornado.ioloop
-import tornado.options
-import tornado.web
+from tornado.auth import FacebookGraphMixin
+from tornado.escape import json_decode
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.web import Application, asynchronous, authenticated, HTTPError, RedirectHandler, UIModule, url
 from tornado.options import define, options
 from modules.tornado_graphql_handler import TornadoGraphQLHandler
 from modules.tornado_authentication import BaseHandler, AuthLoginHandler, AuthLogoutHandler
@@ -46,14 +42,14 @@ try:
 except:
     sys.exit(1)
 
-class Application(tornado.web.Application):
+class Swayze(Application):
     def __init__(self):
         """Responsible for global configuration, including the routing table that maps requests to handlers"""
 
         # How Tornado performs mappings between URLs and handlers
         handlers = [
             (r"/", MainHandler),
-            tornado.web.url(r"/app", tornado.web.RedirectHandler, {"url": "https://www.imdb.com/title/tt0102685/"}),
+            url(r"/app", RedirectHandler, {"url": "https://www.imdb.com/title/tt0102685/"}),
             (r"/auth/login", AuthLoginHandler),
             (r"/auth/logout", AuthLogoutHandler),
             (r"/graphql", TornadoGraphQLHandler, dict(graphiql=False, schema=schema))
@@ -74,23 +70,23 @@ class Application(tornado.web.Application):
         }
 
         # Used for single inheritance to call parent class
-        tornado.web.Application.__init__(self, handlers, **settings)
+        Application.__init__(self, handlers, **settings)
 
-class MainHandler(BaseHandler, tornado.auth.FacebookGraphMixin):
-    @tornado.web.authenticated
-    @tornado.web.asynchronous
+class MainHandler(BaseHandler, FacebookGraphMixin):
+    @authenticated
+    @asynchronous
     async def get(self):
         https = tornado.httpclient.AsyncHTTPClient()
         await https.fetch("https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.json?accessType=DOWNLOAD", callback=self.on_response)
 
     def on_response(self, response):
         if response.error:
-            raise tornado.web.HTTPError(500)
-        json = tornado.escape.json_decode(response.body)
+            raise HTTPError(500)
+        json = json_decode(response.body)
         self.write(json["meta"]["view"])
         self.finish()
 
-class PostModule(tornado.web.UIModule):
+class PostModule(UIModule):
     def render(self, post):
         return self.render_string("modules/post.html", post=post)
 
@@ -101,9 +97,9 @@ def main():
         return
     ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ssl_ctx.load_cert_chain(os.path.join("./server", "server.pem"), os.path.join("./server", "server-key.pem"))
-    http_server = tornado.httpserver.HTTPServer(Application(), ssl_options=ssl_ctx)
+    http_server = HTTPServer(Swayze(), ssl_options=ssl_ctx)
     http_server.listen(options.port)
-    tornado.ioloop.IOLoop.current().start()
+    IOLoop.current().start()
 
 if __name__ == "__main__":
     main()
