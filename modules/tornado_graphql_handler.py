@@ -21,8 +21,8 @@ from werkzeug.http import parse_accept_header
 
 # from graphene_tornado.render_graphiql import render_graphiql
 # from graphene_tornado.tornado_executor import TornadoExecutor
-from modules.graphene_tornado.render_graphiql import render_graphiql
-from modules.graphene_tornado.tornado_executor import TornadoExecutor
+from modules.render_graphiql import render_graphiql
+from modules.tornado_executor import TornadoExecutor
 
 
 class ExecutionError(Exception):

@@ -17,30 +17,33 @@ import ssl
 import sys
 from tornado.auth import FacebookGraphMixin
 from tornado.escape import json_decode
+from tornado.httpclient import AsyncHTTPClient
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, asynchronous, authenticated, HTTPError, RedirectHandler, UIModule, url
-from tornado.options import define, options
+from tornado.options import define, options, parse_command_line, parse_config_file
+
+# Application modules
+from modules.tornado_authentication import BaseHandler, AuthLoginHandler, AuthLogoutHandler, PostModule
 from modules.tornado_graphql_handler import TornadoGraphQLHandler
-from modules.tornado_authentication import BaseHandler, AuthLoginHandler, AuthLogoutHandler
+from modules.tornado_main import MainHandler
 from modules.schema import schema
-from modules.tornado_graphql_handler import TornadoGraphQLHandler
 
 # Default CLI parameters
 define("port", default=443, help="run on the given port", type=int)
 define("facebook_api_key", help="your Facebook application API key", type=str)
 define("facebook_secret", help="your Facebook application secret", type=str)
 
-# Logging variables
-logLevel = logging.DEBUG
-logFileFormatter = "%(asctime)s %(levelname)s %(message)s"
+# # Logging variables
+# logLevel = logging.DEBUG
+# logFileFormatter = "%(asctime)s %(levelname)s %(message)s"
 
-# Enable Logging
-try:
-    logging.basicConfig(format=logFileFormatter, datefmt='%m/%d/%Y %I:%M:%S %p', level=logLevel)
-    logging.getLogger(__name__)
-except:
-    sys.exit(1)
+# # Enable Logging
+# try:
+#     logging.basicConfig(format=logFileFormatter, datefmt='%m/%d/%Y %I:%M:%S %p', level=logLevel)
+#     logging.getLogger(__name__)
+# except:
+#     sys.exit(1)
 
 class Swayze(Application):
     def __init__(self):
@@ -61,7 +64,7 @@ class Swayze(Application):
             "login_url": "/auth/login",
             "template_path": os.path.join(os.path.dirname(__file__), "templates"),
             "static_path": os.path.join(os.path.dirname(__file__), "static"),
-            "xsrf_cookies": True,
+            # "xsrf_cookies": True,
             "facebook_api_key": options.facebook_api_key,
             "facebook_secret": options.facebook_secret,
             "ui_modules": {"Post": PostModule},
@@ -72,33 +75,26 @@ class Swayze(Application):
         # Used for single inheritance to call parent class
         Application.__init__(self, handlers, **settings)
 
-class MainHandler(BaseHandler, FacebookGraphMixin):
-    @authenticated
-    @asynchronous
-    async def get(self):
-        https = tornado.httpclient.AsyncHTTPClient()
-        await https.fetch("https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.json?accessType=DOWNLOAD", callback=self.on_response)
-
-    def on_response(self, response):
-        if response.error:
-            raise HTTPError(500)
-        json = json_decode(response.body)
-        self.write(json["meta"]["view"])
-        self.finish()
-
-class PostModule(UIModule):
-    def render(self, post):
-        return self.render_string("modules/post.html", post=post)
-
 def main():
-    tornado.options.parse_command_line()
+    """Primary function to start application"""
+
+    # Options to define application parameters
+    parse_command_line()
+
+    # Verify user inputted Facebook API key/secret
     if not (options.facebook_api_key and options.facebook_secret):
         logging.info("--facebook_api_key and --facebook_secret must be set")
         return
-    ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_ctx.load_cert_chain(os.path.join("./server", "server.pem"), os.path.join("./server", "server-key.pem"))
-    http_server = HTTPServer(Swayze(), ssl_options=ssl_ctx)
-    http_server.listen(options.port)
+
+    # Enable SSL web server, needed for Facebook auth support
+    sslCtx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    sslCtx.load_cert_chain(os.path.join("./server", "server.pem"), os.path.join("./server", "server-key.pem"))
+
+    # Start web application
+    httpServer = HTTPServer(Swayze(), ssl_options=sslCtx)
+    httpServer.listen(options.port)
+    
+    # Start the I/O loop for the current thread
     IOLoop.current().start()
 
 if __name__ == "__main__":
