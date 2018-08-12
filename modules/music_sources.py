@@ -13,12 +13,13 @@ from modules.tornado_application import BaseHandler
 class Soundcloud(BaseHandler):
     """Get Soundcloud resources and normalize data"""
 
+    # @authenticated
     @asynchronous
     async def get(self):
         """HTTP GET Method"""
 
         # An non-blocking HTTP client
-        await AsyncHTTPClient().fetch("https://soundcloud.com/scumgang6ix9ine", callback=self.onResponse)
+        await AsyncHTTPClient().fetch("https://soundcloud.com/tomberlinmusic/tracks", callback=self.onResponse)
 
     def onResponse(self, response):
         """Respond with a JSON response"""
@@ -35,5 +36,3 @@ class Soundcloud(BaseHandler):
 
         # Finishes this response, ending the HTTP request
         self.finish()
-
-    "https://soundcloud.com/scumgang6ix9ine"

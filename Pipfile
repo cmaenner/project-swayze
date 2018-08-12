@@ -8,6 +8,7 @@ name = "pypi"
 [packages]
 tornado = "*"
 graphene = "*"
+scrapy = "*"
 
 [requires]
 python_version = "3.6"
